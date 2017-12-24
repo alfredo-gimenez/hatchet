@@ -27,12 +27,26 @@ class TreeMetaColumns:
         self.inclusive_aggregators = other.inclusive_aggregators
 
 
+class ObservedDataFrame(pd.DataFrame):
+    """ Subclass of DataFrame that observes modifications and executes a callback after each one """
+
+    def __init__(self, df, post_modification_cb=lambda *args: None):
+        super(ObservedDataFrame, self).__init__(df)
+        self.post_modification_cb = post_modification_cb
+
+    # TODO: Currently wrapping __setitem__ only, how to wrap all functions that modify a DataFrame with this?
+
+    def __setitem__(self, key, value):
+        pd.DataFrame.__setitem__(self, key, value)
+        self.post_modification_cb()
+
+
 class Forest(object, TreeMetaColumns):
 
     def __init__(self, df_samples, tree_meta_columns):
         super(Forest, self).__init__()
         self.copy_tree_meta_columns(tree_meta_columns)
-        self._df_samples = df_samples
+        self._df_samples = ObservedDataFrame(df_samples, self.regenerate_forest)
         self._df_nodes = self.generate_forest()
 
     def __repr__(self):
@@ -43,12 +57,21 @@ class Forest(object, TreeMetaColumns):
     def to_json(self):
         return [self.to_json_tree(root) for root in self.roots()]
 
+    def regenerate_forest(self):
+        self._df_nodes = self.generate_forest()
+
     @property
     def df_samples(self):
         return self._df_samples
 
     @df_samples.setter
     def df_samples(self, value):
+        """ When modifying the samples DataFrame, regenerate the forest """
+
+        self._df_samples = value
+        self.regenerate_forest()
+
+    def __setitem__(self, value):
         """ When modifying the samples DataFrame, regenerate the forest """
 
         self._df_samples = value
