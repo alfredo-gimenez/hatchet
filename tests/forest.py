@@ -34,6 +34,11 @@ def test_forest():
     assert(json.dumps(forest.to_json(), sort_keys=True) ==
            json.dumps([forest_tests_truths.true_scaled_tree], sort_keys=True))
 
+    forest.df_samples.replace(100.0, 500.0, inplace=True)
+
+    assert(json.dumps(forest.to_json(), sort_keys=True) ==
+           json.dumps([forest_tests_truths.true_scaled_clipped_tree], sort_keys=True))
+
     # Modifying the nodes directly should not be allowed
-    with pytest.raises(Exception) as e:
+    with pytest.raises(Exception):
         forest.df_nodes = pd.DataFrame([1, 2, 3])
