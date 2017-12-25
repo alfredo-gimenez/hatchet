@@ -94,6 +94,15 @@ class Forest(object, TreeMetaColumns):
         node_hash = node[self.hash_column]
         return self._df_nodes[self._df_nodes[self.parent_hash_column] == node_hash]
 
+    def query_path(self, node, child_selector):
+        """ Return a DataFrame with a path through the tree rooted at `node`,
+         where the path is determined at each level by `child_selector` """
+
+        children = self.children_of(node)
+        if children:
+            return pd.DataFrame([node]).append(self.query_path(child_selector(children), child_selector))
+        return pd.DataFrame([node])
+
     def roots(self):
         """ Convenience function to get roots as a list of Node instances """
 
@@ -176,19 +185,11 @@ class Node(pd.Series, TreeMetaColumns):
     def children(self):
         return self.forest.children_of(self)
 
-    def hot_path(self, column=None, max_function=None):
-        if max_function is not None:
-            key = max_function
-        elif column is not None:
-            key = lambda c: c[column]
-        else:
-            raise Exception("Ambiguous call to hotpath! Must supply column or max_function!")
+    def path(self, child_selector):
+        return self.forest.query_path(self, child_selector)
 
-        children = self.children
-        if children:
-            max_child = max(children, key=key)
-            return [self] + max_child.hot_path(column, max_function)
-        return [self]
+    def hot_path(self, column):
+        return self.path(lambda children: max(children, key=lambda c: c[column]))
 
 
 class Tree(object, TreeMetaColumns):

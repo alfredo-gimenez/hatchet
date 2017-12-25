@@ -23,9 +23,9 @@ def test_forest():
     assert(json.dumps(tree.to_json(), sort_keys=True) ==
            json.dumps(forest_tests_truths.true_tree, sort_keys=True))
 
-    hot_path = [node.to_dict() for node in tree.hot_path('time')]
+    hot_path = tree.hot_path('time')
 
-    assert(json.dumps(hot_path, sort_keys=True) ==
+    assert(json.dumps(json.loads(hot_path.to_json(orient='records')), sort_keys=True) ==
            json.dumps(forest_tests_truths.true_hot_path, sort_keys=True))
 
     # When modifying samples, the inclusive tree should update
