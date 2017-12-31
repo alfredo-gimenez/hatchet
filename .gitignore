@@ -2,3 +2,5 @@
 *.metric-db
 /.cache
 experiment.xml
+
+.idea/*

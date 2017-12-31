@@ -43,13 +43,13 @@ class ObservedDataFrame(pd.DataFrame):
         self.post_modification_cb()
 
 
-class Forest(object, TreeMetaColumns):
+class MultiRootTree(object, TreeMetaColumns):
 
     def __init__(self, df_samples, tree_meta_columns):
-        super(Forest, self).__init__()
+        super(MultiRootTree, self).__init__()
         self.copy_tree_meta_columns(tree_meta_columns)
-        self._df_samples = ObservedDataFrame(df_samples, self.regenerate_forest)
-        self._df_nodes = self.generate_forest()
+        self._df_samples = ObservedDataFrame(df_samples, self.regenerate_nodes)
+        self._df_nodes = self.generate_nodes()
 
     def __repr__(self):
         """ Generate a JSON tree for all roots and combine into a list """
@@ -59,8 +59,8 @@ class Forest(object, TreeMetaColumns):
     def to_json(self):
         return [self.to_json_tree(root) for root in self.roots()]
 
-    def regenerate_forest(self):
-        self._df_nodes = self.generate_forest()
+    def regenerate_nodes(self):
+        self._df_nodes = self.generate_nodes()
 
     @property
     def df_samples(self):
@@ -71,7 +71,7 @@ class Forest(object, TreeMetaColumns):
         """ When modifying the samples DataFrame, regenerate the forest """
 
         self._df_samples = value
-        self.regenerate_forest()
+        self.regenerate_nodes()
 
     @property
     def df_nodes(self):
@@ -156,7 +156,7 @@ class Forest(object, TreeMetaColumns):
             # Produce a set of nodes at this hierarchy depth
             yield df_nodes[df_nodes[self.hierarchy_depth] == i].copy()
 
-    def generate_forest(self):
+    def generate_nodes(self):
         """ Generate all inclusive nodes and concatenate into a single DataFrame representing the forest """
 
         return pd.concat(self.node_generator())
